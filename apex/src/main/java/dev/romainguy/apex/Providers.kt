@@ -12,6 +12,7 @@ import kotlin.collections.set
 import kotlin.math.floor
 import kotlin.reflect.KClass
 
+// TODO Optimize providers handling
 class Providers {
     private val providers: MutableMap<KClass<*>, Any> = mutableMapOf()
 

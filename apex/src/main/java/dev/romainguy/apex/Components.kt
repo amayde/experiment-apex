@@ -14,7 +14,7 @@ interface RenderComponent {
 }
 
 fun Element.Render(render: (providers: Providers, element: Element, renderer: Renderer) -> Unit) {
-    addComponent(object : RenderComponent {
+    addComponent<RenderComponent>(object : RenderComponent {
         override fun render(providers: Providers, element: Element, renderer: Renderer) {
             render(providers, element, renderer)
         }
@@ -31,7 +31,7 @@ abstract class LayoutComponent {
 }
 
 fun Element.Layout(layout: (providers: Providers, element: Element, size: SizeF) -> SizeF) {
-    addComponent(object : LayoutComponent() {
+    addComponent<LayoutComponent>(object : LayoutComponent() {
         override fun layout(providers: Providers, element: Element, size: SizeF): SizeF {
             return layout(providers, element, size)
         }
@@ -45,7 +45,7 @@ interface MotionInputComponent {
 fun Element.MotionInput(
     action: (providers: Providers, element: Element, event: MotionEvent) -> Boolean
 ) {
-    addComponent(object : MotionInputComponent {
+    addComponent<MotionInputComponent>(object : MotionInputComponent {
         override fun motionInput(providers: Providers, element: Element, event: MotionEvent): Boolean {
             return action(providers, element, event)
         }
@@ -57,7 +57,7 @@ interface ProviderComponent {
 }
 
 inline fun <reified T : Any> Element.Provider(localProvider: T) {
-    addComponent(object : ProviderComponent {
+    addComponent<ProviderComponent>(object : ProviderComponent {
         override fun provide(providers: Providers, element: Element) {
             providers.set(localProvider)
         }
@@ -69,11 +69,11 @@ class PaddingComponent(val padding: RectF) {
 }
 
 inline fun Element.Padding(padding: RectF) {
-    addComponent(PaddingComponent(padding))
+    addComponent<PaddingComponent>(PaddingComponent(padding))
 }
 
 inline fun Element.Padding(padding: Float) {
-    addComponent(PaddingComponent(padding))
+    addComponent<PaddingComponent>(PaddingComponent(padding))
 }
 
 enum class VerticalAlignment {
@@ -89,9 +89,9 @@ enum class HorizontalAlignment {
 }
 
 inline fun Element.Alignment(alignment: VerticalAlignment) {
-    addComponent(alignment)
+    addComponent<VerticalAlignment>(alignment)
 }
 
 inline fun Element.Alignment(alignment: HorizontalAlignment) {
-    addComponent(alignment)
+    addComponent<HorizontalAlignment>(alignment)
 }
