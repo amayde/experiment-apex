@@ -46,7 +46,11 @@ fun Element.MotionInput(
     action: (providers: Providers, element: Element, event: MotionEvent) -> Boolean
 ) {
     addComponent<MotionInputComponent>(object : MotionInputComponent {
-        override fun motionInput(providers: Providers, element: Element, event: MotionEvent): Boolean {
+        override fun motionInput(
+            providers: Providers,
+            element: Element,
+            event: MotionEvent
+        ): Boolean {
             return action(providers, element, event)
         }
     })
@@ -94,4 +98,50 @@ inline fun Element.Alignment(alignment: VerticalAlignment) {
 
 inline fun Element.Alignment(alignment: HorizontalAlignment) {
     addComponent<HorizontalAlignment>(alignment)
+}
+
+enum class State {
+    Enabled,
+    Disabled
+}
+
+class OnClickModel(
+    var onClick: (element: Element) -> Unit = { }
+)
+
+class InternalState(
+    var state: State = State.Enabled
+) {
+    val isEnabled get() = state == State.Enabled
+    var isPressed: Boolean = false
+}
+
+inline fun Element.OnClick(onClickModel: OnClickModel) {
+    addComponent<OnClickModel>(onClickModel)
+
+    MotionInput { _, element, event ->
+        if (element.component<InternalState>().isEnabled) {
+            val internalState = element.component<InternalState>()
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    internalState.isPressed = true
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (internalState.isPressed) {
+                        internalState.isPressed = false
+                        element.component<OnClickModel>().onClick(element)
+                    }
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    internalState.isPressed = false
+                    true
+                }
+                else -> false // TODO BUG_FIX MotionEvent.ACTION_MOVE out of the element
+            }
+        } else {
+            false
+        }
+    }
 }

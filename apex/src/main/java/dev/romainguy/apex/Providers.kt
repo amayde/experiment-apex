@@ -30,8 +30,6 @@ class Providers {
     operator fun <T: Any> set(type: KClass<T>, provider: T) {
         providers[type] = provider
     }
-
-    fun copyOf(): Providers = Providers().apply { providers.putAll(this@Providers.providers) }
 }
 
 class DensityProvider(val density: Float) {

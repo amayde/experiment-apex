@@ -37,19 +37,21 @@ class MainActivity : Activity() {
 
 // Example of how to use providers to override global resources down the tree.
 // Providers can be set at any level:
-//            Provider(ThemeProvider(
-//                style = Paint.Style.FILL_AND_STROKE,
-//                border = Color.valueOf(0.46f, 0.81f, 0.57f),
-//                contentBackground = Color.valueOf(0.91f, 0.96f, 0.90f),
-//                disabled = Color.valueOf(0.46f, 0.81f, 0.57f).desaturated(),
-//                text = Color.valueOf(0.46f, 0.81f, 0.57f),
-//                typeface = Typeface.create(
-//                    Typeface.create("sans-serif-condensed", Typeface.NORMAL),
-//                    200,
-//                    false
-//                ),
-//                strokeWidth = 1.0f
-//            ))
+            Provider(
+                ThemeProvider(
+                    style = Paint.Style.FILL_AND_STROKE,
+                    border = Color.valueOf(0.46f, 0.81f, 0.57f),
+                    contentBackground = Color.valueOf(0.91f, 0.96f, 0.90f),
+                    disabled = Color.valueOf(0.46f, 0.81f, 0.57f).desaturated(),
+                    text = Color.valueOf(0.46f, 0.81f, 0.57f),
+                    typeface = Typeface.create(
+                        Typeface.create("sans-serif-condensed", Typeface.NORMAL),
+                        200,
+                        false
+                    ),
+                    strokeWidth = 1.0f
+                )
+            )
 
             Column {
                 Alignment(HorizontalAlignment.Center)
@@ -57,26 +59,41 @@ class MainActivity : Activity() {
 
                 Padding(16.0f)
 
-                val image = Image(ImageModel(TestImage[imageIndex]))
+                val image = Image(ImageModel(TestImage[imageIndex])) {
+                    OnClick(OnClickModel { next ->
+                        if (imageIndex < TestImage.size - 1) imageIndex++
+                        parent.requireChild(Id.ButtonNext).component<InternalState>().state =
+                            if (imageIndex < TestImage.size - 1) State.Enabled else State.Disabled
+                        parent.requireChild(Id.ButtonPrevious).component<InternalState>().state =
+                            if (imageIndex > 0) State.Enabled else State.Disabled
+                        this.component<ImageModel>().bitmap = TestImage[imageIndex]
+                    })
+                }
 
                 Row {
-                    Button(ButtonModel("Previous", State.Disabled) { previous ->
-                        if (imageIndex > 0) imageIndex--
-                        requireChild(Id.ButtonNext).component<ButtonModel>().state =
-                            if (imageIndex < TestImage.size) State.Enabled else State.Disabled
-                        previous.component<ButtonModel>().state =
-                            if (imageIndex > 0) State.Enabled else State.Disabled
-                        image.component<ImageModel>().bitmap = TestImage[imageIndex]
-                    }).addComponent<Id>(Id.ButtonPrevious)
+                    Button(ButtonModel("Previous"), State.Disabled) {
+                        OnClick(OnClickModel { previous ->
+                            if (imageIndex > 0) imageIndex--
+                            parent.requireChild(Id.ButtonNext).component<InternalState>().state =
+                                if (imageIndex < TestImage.size) State.Enabled else State.Disabled
+                            previous.component<InternalState>().state =
+                                if (imageIndex > 0) State.Enabled else State.Disabled
+                            image.component<ImageModel>().bitmap = TestImage[imageIndex]
+                        })
 
-                    Button(ButtonModel("Next") { next ->
-                        if (imageIndex < TestImage.size - 1) imageIndex++
-                        next.component<ButtonModel>().state =
-                            if (imageIndex < TestImage.size - 1) State.Enabled else State.Disabled
-                        requireChild(Id.ButtonPrevious).component<ButtonModel>().state =
-                            if (imageIndex > 0) State.Enabled else State.Disabled
-                        image.component<ImageModel>().bitmap = TestImage[imageIndex]
-                    }).addComponent<Id>(Id.ButtonNext)
+                    }.addComponent<Id>(Id.ButtonPrevious)
+
+
+                    Button(ButtonModel("Next")) {
+                        OnClick(OnClickModel { next ->
+                            if (imageIndex < TestImage.size - 1) imageIndex++
+                            next.component<InternalState>().state =
+                                if (imageIndex < TestImage.size - 1) State.Enabled else State.Disabled
+                            parent.requireChild(Id.ButtonPrevious).component<InternalState>().state =
+                                if (imageIndex > 0) State.Enabled else State.Disabled
+                            image.component<ImageModel>().bitmap = TestImage[imageIndex]
+                        })
+                    }.addComponent<Id>(Id.ButtonNext)
                 }
             }
         }
@@ -92,8 +109,9 @@ class MainActivity : Activity() {
 
 class ImageModel(var bitmap: Bitmap)
 
-fun Element.Image(model: ImageModel) = ChildElement {
+fun Element.Image(model: ImageModel, content: Element.() -> Unit = { }) = ChildElement {
     addComponent<ImageModel>(model)
+    addComponent<InternalState>(InternalState())
 
     val paint = Paint().apply {
         isFilterBitmap = true
@@ -126,4 +144,6 @@ fun Element.Image(model: ImageModel) = ChildElement {
             paint
         )
     }
+
+    content()
 }

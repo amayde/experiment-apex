@@ -3,31 +3,21 @@ package dev.romainguy.apex
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.SizeF
-import android.view.MotionEvent
 
-enum class State {
-    Enabled,
-    Disabled
-}
-
-// TODO MotionInputComponent generic
 class ButtonModel(
-    var label: String,
-    var state: State = State.Enabled,
-    var onClick: (element: Element) -> Unit = { }
-) {
-    val isEnabled get() = state == State.Enabled
-}
+    var label: String
+)
 
-fun Element.Button(model: ButtonModel) = ChildElement {
+// How to link state from model to internal state ? Is it a viable solution ? => test to implement on Image
+fun Element.Button(model: ButtonModel, state: State = State.Enabled, content: Element.() -> Unit = { }) = ChildElement {
     addComponent<ButtonModel>(model)
+    addComponent<InternalState>(InternalState(state = state))
 
-    data class InternalState(
-        var isPressed: Boolean = false,
+    data class ButtonInternalState(
         var textWidth: Float = 0.0f,
         var textHeight: Float = 0.0f
     )
-    addComponent<InternalState>(InternalState())
+    addComponent<ButtonInternalState>(ButtonInternalState())
 
     Padding(RectF(8.0f, 4.0f, 8.0f, 4.0f))
 
@@ -36,15 +26,16 @@ fun Element.Button(model: ButtonModel) = ChildElement {
     }
 
     Render { providers, element, renderer ->
-        with (providers.get<DensityProvider>()) {
+        with(providers.get<DensityProvider>()) {
             val theme = providers.get<ThemeProvider>()
             val bounds = element.component<LayoutComponent>().bounds
             val radius = theme.cornerRadius.toPx()
+            val buttonInternalState = element.component<ButtonInternalState>()
             val internalState = element.component<InternalState>()
 
             if (theme.style != Paint.Style.STROKE) {
                 paint.style = Paint.Style.FILL
-                val color = if (model.isEnabled) theme.contentBackground else theme.contentDisabled
+                val color = if (internalState.isEnabled) theme.contentBackground else theme.contentDisabled
                 paint.color =
                     (if (!internalState.isPressed) color else color.complementary()).toArgb()
             }
@@ -52,7 +43,7 @@ fun Element.Button(model: ButtonModel) = ChildElement {
             if (theme.style != Paint.Style.FILL) {
                 paint.strokeWidth = theme.strokeWidth.toPx()
                 paint.style = Paint.Style.STROKE
-                val color = if (model.isEnabled) theme.border else theme.disabled
+                val color = if (internalState.isEnabled) theme.border else theme.disabled
                 paint.color =
                     (if (!internalState.isPressed) color else color.complementary()).toArgb()
 
@@ -65,13 +56,13 @@ fun Element.Button(model: ButtonModel) = ChildElement {
             )
 
 
-            val color = if (model.isEnabled) theme.text else theme.disabled
+            val color = if (internalState.isEnabled) theme.text else theme.disabled
             paint.color = (if (!internalState.isPressed) color else color.complementary()).toArgb()
             paint.style = Paint.Style.FILL
             paint.strokeWidth = 0.0f
 
-            val x = (bounds.width() - internalState.textWidth) * 0.5f
-            val y = (bounds.height() - internalState.textHeight) * 0.5f - paint.ascent()
+            val x = (bounds.width() - buttonInternalState.textWidth) * 0.5f
+            val y = (bounds.height() - buttonInternalState.textHeight) * 0.5f - paint.ascent()
             renderer.move(x, y)
             renderer.drawText(model.label, paint)
             renderer.move(-x, -y)
@@ -79,48 +70,24 @@ fun Element.Button(model: ButtonModel) = ChildElement {
     }
 
     Layout { providers, element, _ ->
-        with (providers.get<DensityProvider>()) {
+        with(providers.get<DensityProvider>()) {
             val theme = providers.get<ThemeProvider>()
             val padding = element.component<PaddingComponent>().padding.toPx()
-            val internalState = element.component<InternalState>()
+            val buttonInternalState = element.component<ButtonInternalState>()
 
             paint.typeface = theme.typeface
             paint.textSize = theme.fontSize.toPx()
-            internalState.textWidth = paint.measureText(model.label)
+            buttonInternalState.textWidth = paint.measureText(model.label)
             val fontMetrics = paint.fontMetrics
-            internalState.textHeight = -fontMetrics.top + fontMetrics.bottom
+            buttonInternalState.textHeight = -fontMetrics.top + fontMetrics.bottom
 
             val strokeWidth = theme.strokeWidth.toPx()
             SizeF(
-                internalState.textWidth + padding.left + padding.right + 2.0f * strokeWidth,
-                internalState.textHeight + padding.top + padding.bottom
+                buttonInternalState.textWidth + padding.left + padding.right + 2.0f * strokeWidth,
+                buttonInternalState.textHeight + padding.top + padding.bottom
             )
         }
     }
 
-    MotionInput { _, element, event ->
-        if (element.component<ButtonModel>().isEnabled) {
-            val internalState = element.component<InternalState>()
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    internalState.isPressed = true
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    if (internalState.isPressed) {
-                        internalState.isPressed = false
-                        element.component<ButtonModel>().onClick(element)
-                    }
-                    true
-                }
-                MotionEvent.ACTION_CANCEL -> {
-                    internalState.isPressed = false
-                    true
-                }
-                else -> false
-            }
-        } else {
-            false
-        }
-    }
+    content()
 }
