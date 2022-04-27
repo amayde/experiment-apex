@@ -12,16 +12,16 @@ import dev.romainguy.apex.android.AndroidRenderer
 
 private fun layout(providers: Providers, element: Element, size: SizeF) {
     element.forEachChild { child ->
-        val localProviders = providers.copyOf()
+//        val localProviders = providers.copyOf()
 
         child.applyComponent<ProviderComponent> {
-            provide(localProviders, child)
+            provide(providers, child)
         }
 
         child.applyComponent<LayoutComponent> {
-            val minSize = minSize(localProviders, child)
-            val maxSize = maxSize(localProviders, child)
-            val childSize = min(max(minSize, layout(localProviders, child, size)), maxSize)
+            val minSize = minSize(providers, child)
+            val maxSize = maxSize(providers, child)
+            val childSize = min(max(minSize, layout(providers, child, size)), maxSize)
             val halign = child.componentOrNull() ?: HorizontalAlignment.Start
             val valign = child.componentOrNull() ?: VerticalAlignment.Start
 
@@ -43,18 +43,18 @@ private fun layout(providers: Providers, element: Element, size: SizeF) {
 
 private fun draw(providers: Providers, element: Element, renderer: Renderer) {
     element.forEachChild { child ->
-        val localProviders = providers.copyOf()
+//        val localProviders = providers.copyOf()
 
         child.applyComponent<ProviderComponent> {
-            provide(localProviders, child)
+            provide(providers, child)
         }
 
         val bounds = child.componentOrNull<LayoutComponent>()?.bounds ?: EmptyBounds
         renderer.move(bounds.left, bounds.top)
         child.applyComponent<RenderComponent> {
-            render(localProviders, child, renderer)
+            render(providers, child, renderer)
         }
-        draw(localProviders, child, renderer)
+        draw(providers, child, renderer)
         renderer.move(-bounds.left, -bounds.top)
     }
 }
@@ -69,10 +69,10 @@ private fun motion(
     var done = false
 
     element.forEachChild { child ->
-        val localProviders = providers.copyOf()
+//        val localProviders = providers.copyOf()
 
         child.applyComponent<ProviderComponent> {
-            provide(localProviders, child)
+            provide(providers, child)
         }
 
         val sourceBounds = child.componentOrNull<LayoutComponent>()?.bounds ?: EmptyBounds
@@ -109,17 +109,17 @@ private class RootElement(context: Context) : Element() {
             if (surface == null) return
 
             // TODO Don't relayout/redraw on every v-sync
-            val rootProviders = providers.copyOf()
+//            val rootProviders = providers.copyOf()
             applyComponent<ProviderComponent> {
-                provide(rootProviders, this@RootElement)
+                provide(providers, this@RootElement)
             }
 
-            layout(rootProviders, this@RootElement, size)
+            layout(providers, this@RootElement, size)
 
             with (surface?.lockHardwareCanvas()!!) {
-                drawColor(rootProviders.get<ThemeProvider>().background.toArgb())
+                drawColor(providers.get<ThemeProvider>().background.toArgb())
                 val renderer = AndroidRenderer(this)
-                draw(rootProviders, this@RootElement, renderer)
+                draw(providers, this@RootElement, renderer)
                 surface?.unlockCanvasAndPost(this)
             }
 
@@ -145,12 +145,11 @@ private class RootElement(context: Context) : Element() {
     }
 
     fun onMotion(event: MotionEvent): Boolean {
-        val rootProviders = providers.copyOf()
         applyComponent<ProviderComponent> {
-            provide(rootProviders, this@RootElement)
+            provide(providers, this@RootElement)
         }
 
-        return motion(rootProviders, this, event, 0.0f, 0.0f)
+        return motion(providers, this, event, 0.0f, 0.0f)
     }
 }
 
