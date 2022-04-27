@@ -67,7 +67,7 @@ class MainActivity : Activity() {
                         previous.component<ButtonModel>().state =
                             if (imageIndex > 0) State.Enabled else State.Disabled
                         image.component<ImageModel>().bitmap = TestImage[imageIndex]
-                    }).addComponent(Id.ButtonPrevious)
+                    }).addComponent<Id>(Id.ButtonPrevious)
 
                     Button(ButtonModel("Next") { next ->
                         if (imageIndex < TestImage.size - 1) imageIndex++
@@ -76,7 +76,7 @@ class MainActivity : Activity() {
                         requireChild(Id.ButtonPrevious).component<ButtonModel>().state =
                             if (imageIndex > 0) State.Enabled else State.Disabled
                         image.component<ImageModel>().bitmap = TestImage[imageIndex]
-                    }).addComponent(Id.ButtonNext)
+                    }).addComponent<Id>(Id.ButtonNext)
                 }
             }
         }
@@ -93,7 +93,7 @@ class MainActivity : Activity() {
 class ImageModel(var bitmap: Bitmap)
 
 fun Element.Image(model: ImageModel) = ChildElement {
-    addComponent(model)
+    addComponent<ImageModel>(model)
 
     val paint = Paint().apply {
         isFilterBitmap = true

@@ -10,6 +10,7 @@ enum class State {
     Disabled
 }
 
+// TODO MotionInputComponent generic
 class ButtonModel(
     var label: String,
     var state: State = State.Enabled,
@@ -19,14 +20,14 @@ class ButtonModel(
 }
 
 fun Element.Button(model: ButtonModel) = ChildElement {
-    addComponent(model)
+    addComponent<ButtonModel>(model)
 
     data class InternalState(
         var isPressed: Boolean = false,
         var textWidth: Float = 0.0f,
         var textHeight: Float = 0.0f
     )
-    addComponent(InternalState())
+    addComponent<InternalState>(InternalState())
 
     Padding(RectF(8.0f, 4.0f, 8.0f, 4.0f))
 

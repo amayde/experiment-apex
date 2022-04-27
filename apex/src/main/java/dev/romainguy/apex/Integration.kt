@@ -108,6 +108,7 @@ private class RootElement(context: Context) : Element() {
         override fun doFrame(frameTimeNanos: Long) {
             if (surface == null) return
 
+            // TODO Don't relayout/redraw on every v-sync
             val rootProviders = providers.copyOf()
             applyComponent<ProviderComponent> {
                 provide(rootProviders, this@RootElement)

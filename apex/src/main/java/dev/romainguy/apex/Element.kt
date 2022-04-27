@@ -7,7 +7,7 @@ open class Element(content: Element.() -> Unit = { }) {
         private set
 
     private val children = mutableListOf<Element>()
-    private val components = mutableListOf<Any>()
+    private val components = linkedMapOf<KClass<*>, MutableList<Any>>()
 
     init {
         content()
@@ -49,26 +49,33 @@ open class Element(content: Element.() -> Unit = { }) {
     inline fun <reified T : Any> requireChild(componentValue: T) =
         requireChild { it.componentOrNull(T::class) == componentValue }
 
-    fun addComponent(component: Any): Element {
-        components.add(component)
+    fun <T: Any> addComponent(type: KClass<T>, component: Any) {
+        components[type]?.apply {
+            add(component)
+        } ?: components.put(type, mutableListOf(component))
+    }
+
+    inline fun <reified T: Any> addComponent(component: Any): Element {
+        addComponent(T::class, component)
         return this
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T: Any> component(type: KClass<T>) = components.first { type.isInstance(it) } as T
+    fun <T: Any> component(type: KClass<T>) =
+        components[type]?.first() as T
 
     inline fun <reified T : Any> component() = component(T::class)
 
     @Suppress("UNCHECKED_CAST")
     fun <T: Any> componentOrNull(type: KClass<T>) =
-        components.firstOrNull { type.isInstance(it) } as T?
+        components[type]?.firstOrNull() as T?
 
     inline fun <reified T : Any> componentOrNull() = componentOrNull(T::class)
 
     @Suppress("UNCHECKED_CAST")
     fun <T: Any> applyComponent(type: KClass<T>, action: T.()-> Unit) {
-        for (component in components) {
-            if (type.isInstance(component)) (component as T).action()
+        components[type]?.forEach { component ->
+            (component as T).action()
         }
     }
 
