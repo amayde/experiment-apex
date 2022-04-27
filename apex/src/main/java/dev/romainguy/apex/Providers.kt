@@ -31,6 +31,7 @@ class Providers {
         providers[type] = provider
     }
 
+    // TODO Understand why need new instance of Providers ?
     fun copyOf(): Providers = Providers().apply { providers.putAll(this@Providers.providers) }
 }
 
